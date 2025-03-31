@@ -6,18 +6,18 @@ import logging
 from src.crawler import crawler
 from src.utils import is_valid_url
 
-RUNNING = threading.Event()
+STOP = threading.Event()
 
 
 def signalhandler(sig, frame):
-    RUNNING.set()
+    STOP.set()
 
 
 def main(args: argparse.Namespace):
     if not is_valid_url(args.url):
         print("Invalid URL... It should be in the format: https://www.website.com")
         return
-    crawler(args.url, args.db_name, args.sleep, RUNNING)
+    crawler(args.url, args.db_name, args.sleep, STOP)
 
 
 if __name__ == "__main__":

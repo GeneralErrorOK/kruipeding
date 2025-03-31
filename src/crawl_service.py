@@ -1,13 +1,14 @@
 import logging
 import sqlite3
+from collections import Counter
 from http import HTTPStatus
 from typing import List
 
 import requests
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, PageElement, Comment
 from sqlmodel import Session, SQLModel, create_engine, select
 
-from src.models import URLQueueItem, PageInfo
+from src.models import URLQueueItem, PageInfo, PageWord
 
 
 class QueueEmptyError(Exception):
@@ -64,6 +65,13 @@ class CrawlService:
             self._logger.debug(f"Returning db-retrieved URL: {url}")
             return url
 
+    def _tag_visible(self, element: PageElement) -> bool:
+        if element.parent.name in ['style', 'script', 'head', 'title', 'meta', '[document]']:
+            return False
+        if isinstance(element, Comment):
+            return False
+        return True
+
     def store_page_info_and_get_links(self, url: URLQueueItem) -> List[URLQueueItem]:
         result = requests.get(url.url)
         if result.status_code == HTTPStatus.NOT_FOUND:
@@ -76,9 +84,29 @@ class CrawlService:
         soup = BeautifulSoup(result.content, "html5lib")
 
         if soup.title.string is not None:
-            page_info = PageInfo(url_id=url.id, title=soup.title.string)
-            self._logger.debug(f"Storing page: {page_info}")
+            meta_description = None
+            for meta_tag in soup.find_all("meta"):
+                if meta_tag.get("name") == "description":
+                    meta_description = meta_tag.get("content")
+
+            page_info = PageInfo(url_id=url.id, title=soup.title.string, description=meta_description)
             self._session.add(page_info)
+
+            all_text = soup.findAll(text=True)
+            visible_text = filter(self._tag_visible, all_text)
+            all_long_words = []
+            for text in visible_text:
+                stripped = text.strip()
+                split_text = stripped.split(' ')
+                for word in split_text:
+                    if len(word) > 5:
+                        all_long_words.append(word)
+            word_counter = Counter(all_long_words)
+
+            for word in word_counter.most_common(25):
+                self._session.add(PageWord(word=word[0], page=page_info))
+
+            self._logger.debug(f"Storing page: {page_info}")
             self._session.commit()
         else:
             raise PageParsingError("No page title found")

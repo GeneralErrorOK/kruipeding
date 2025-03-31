@@ -5,11 +5,11 @@ import time
 from src.crawl_service import CrawlService, QueueEmptyError, PageNotFoundError, PageParsingError, RateLimitError
 
 
-def crawler(start_url: str, db_name: str, sleep_time: float, running: threading.Event):
+def crawler(start_url: str, db_name: str, sleep_time: float, stop_event: threading.Event):
     incremental_sleep_time = sleep_time * 10 # Seems a good place to start
     crawl_service = CrawlService(db_name)
     logger = logging.getLogger()
-    while not running.is_set():
+    while not stop_event.is_set():
         try:
             url = crawl_service.get_next_url(start_url)
         except QueueEmptyError as e:

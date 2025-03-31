@@ -103,8 +103,11 @@ class CrawlService:
                         all_long_words.append(word)
             word_counter = Counter(all_long_words)
 
+            most_common = []
             for word in word_counter.most_common(25):
+                most_common.append(word)
                 self._session.add(PageWord(word=word[0], page=page_info))
+            self._logger.debug(f"Most common words on {url.url}: {most_common}")
 
             self._logger.debug(f"Storing page: {page_info}")
             self._session.commit()
@@ -136,7 +139,7 @@ class CrawlService:
                 self._logger.debug(f"{link.url} already exists in queue, skipping")
 
     def mark_as_done(self, url: URLQueueItem) -> None:
-        self._logger.debug(f"Marking as done: {url.url} ({url.id})")
+        self._logger.info(f"Marking as done: {url.url} ({url.id})")
         url.done = True
         self._session.add(url)
         self._session.commit()

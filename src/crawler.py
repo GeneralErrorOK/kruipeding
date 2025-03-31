@@ -6,7 +6,7 @@ from src.crawl_service import CrawlService, QueueEmptyError, PageNotFoundError, 
 
 
 def crawler(start_url: str, db_name: str, sleep_time: float, stop_event: threading.Event):
-    incremental_sleep_time = sleep_time * 10 # Seems a good place to start
+    incremental_sleep_time = sleep_time * 2 # Seems a good place to start
     crawl_service = CrawlService(db_name)
     logger = logging.getLogger()
     while not stop_event.is_set():
@@ -34,7 +34,7 @@ def crawler(start_url: str, db_name: str, sleep_time: float, stop_event: threadi
             time.sleep(sleep_time)
             continue
 
-        incremental_sleep_time = sleep_time * 10
+        incremental_sleep_time = sleep_time * 2
         crawl_service.store_unique_page_links(links)
         crawl_service.mark_as_done(url)
         time.sleep(sleep_time)

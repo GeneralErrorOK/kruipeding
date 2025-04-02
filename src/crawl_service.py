@@ -83,7 +83,7 @@ class CrawlService:
 
         soup = BeautifulSoup(result.content, "html5lib")
 
-        if soup.title.string is not None:
+        if soup.title is not None and soup.title.string is not None:
             meta_description = None
             for meta_tag in soup.find_all("meta"):
                 if meta_tag.get("name") == "description":

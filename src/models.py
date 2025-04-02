@@ -9,7 +9,7 @@ class URLQueueItem(SQLModel, table=True):
     __tablename__ = "urls"
     id: Optional[int] = Field(default=None, primary_key=True)
     url: str
-    parent: Optional[int] = Field(default=None, nullable=True)
+    parent_id: Optional[int] = Field(default=None, nullable=True)
     done: bool = Field(default=False, nullable=False)
     created_at: datetime = Field(default=datetime.now(timezone.utc), nullable=False)
     last_edited: datetime = Field(default_factory=partial(datetime.now, timezone.utc), nullable=False)

@@ -10,6 +10,7 @@ STOP = threading.Event()
 
 
 def signalhandler(sig, frame):
+    logging.getLogger().info("Exiting...")
     STOP.set()
 
 

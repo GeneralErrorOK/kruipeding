@@ -2,7 +2,8 @@ import logging
 import threading
 import time
 
-from src.crawl_service import CrawlService, QueueEmptyError, PageNotFoundError, PageParsingError, RateLimitError
+from src.crawl_service import CrawlService, QueueEmptyError, PageNotFoundError, PageParsingError, RateLimitError, \
+    PageRequestError
 
 
 def crawler(start_url: str, db_name: str, sleep_time: float, stop_event: threading.Event):
@@ -19,7 +20,12 @@ def crawler(start_url: str, db_name: str, sleep_time: float, stop_event: threadi
         try:
             links = crawl_service.store_page_info_and_get_links(url)
         except PageNotFoundError as e:
-            logger.error(f"Server returned a 404 on: {e}")
+            logger.error(f"Server returned a 404 on: {e}. Skipping")
+            crawl_service.mark_as_done(url)
+            time.sleep(sleep_time)
+            continue
+        except PageRequestError as e:
+            logger.error(f"Server returned an error: {e}. Skipping")
             crawl_service.mark_as_done(url)
             time.sleep(sleep_time)
             continue
